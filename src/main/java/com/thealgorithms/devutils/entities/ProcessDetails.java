@@ -37,7 +37,7 @@ public class ProcessDetails {
         return waitingTime;
     }
 
-    public int getTurnAroundTimeTime() {
+    public int getTurnAroundTime() {
         return turnAroundTime;
     }
 
