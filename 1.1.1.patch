@@ -1,0 +1,531 @@
+diff --git a/src/main/java/com/thealgorithms/devutils/entities/ProcessDetails.java b/src/main/java/com/thealgorithms/devutils/entities/ProcessDetails.java
+index b8b863ed..e3fefdf0 100644
+--- a/src/main/java/com/thealgorithms/devutils/entities/ProcessDetails.java
++++ b/src/main/java/com/thealgorithms/devutils/entities/ProcessDetails.java
+@@ -37,7 +37,7 @@ public class ProcessDetails {
+         return waitingTime;
+     }
+ 
+-    public int getTurnAroundTimeTime() {
++    public int getTurnAroundTime() {
+         return turnAroundTime;
+     }
+ 
+@@ -61,7 +61,7 @@ public class ProcessDetails {
+         this.waitingTime = waitingTime;
+     }
+ 
+-    public void setTurnAroundTimeTime(final int turnAroundTime) {
++    public void setTurnAroundTime(final int turnAroundTime) {
+         this.turnAroundTime = turnAroundTime;
+     }
+ }
+diff --git a/src/main/java/com/thealgorithms/scheduling/FCFSScheduling.java b/src/main/java/com/thealgorithms/scheduling/FCFSScheduling.java
+index b22e81fe..2a5ac995 100644
+--- a/src/main/java/com/thealgorithms/scheduling/FCFSScheduling.java
++++ b/src/main/java/com/thealgorithms/scheduling/FCFSScheduling.java
+@@ -1,6 +1,7 @@
+ package com.thealgorithms.scheduling;
+ 
+ import com.thealgorithms.devutils.entities.ProcessDetails;
++import java.util.Comparator;
+ import java.util.List;
+ 
+ /**
+@@ -16,32 +17,24 @@ public class FCFSScheduling {
+     }
+ 
+     public void scheduleProcesses() {
++        processes.sort(Comparator.comparingInt(ProcessDetails::getArrivalTime));
+         evaluateWaitingTime();
+         evaluateTurnAroundTime();
+     }
+ 
+     private void evaluateWaitingTime() {
+-        int processesNumber = processes.size();
++        int currentTime = 0;
+ 
+-        if (processesNumber == 0) {
+-            return;
+-        }
+-
+-        int waitingTime = 0;
+-        int burstTime = processes.get(0).getBurstTime();
+-
+-        processes.get(0).setWaitingTime(waitingTime); // for the first process, waiting time will be 0.
+-
+-        for (int i = 1; i < processesNumber; i++) {
+-            processes.get(i).setWaitingTime(waitingTime + burstTime);
+-            waitingTime = processes.get(i).getWaitingTime();
+-            burstTime = processes.get(i).getBurstTime();
++        for (final ProcessDetails process : processes) {
++            currentTime = Math.max(currentTime, process.getArrivalTime());
++            process.setWaitingTime(currentTime - process.getArrivalTime());
++            currentTime += process.getBurstTime();
+         }
+     }
+ 
+     private void evaluateTurnAroundTime() {
+-        for (final var process : processes) {
+-            process.setTurnAroundTimeTime(process.getBurstTime() + process.getWaitingTime());
++        for (final ProcessDetails process : processes) {
++            process.setTurnAroundTime(process.getBurstTime() + process.getWaitingTime());
+         }
+     }
+ }
+diff --git a/src/main/java/com/thealgorithms/scheduling/RRScheduling.java b/src/main/java/com/thealgorithms/scheduling/RRScheduling.java
+index 05efe1d5..2252de4d 100644
+--- a/src/main/java/com/thealgorithms/scheduling/RRScheduling.java
++++ b/src/main/java/com/thealgorithms/scheduling/RRScheduling.java
+@@ -36,13 +36,12 @@ public class RRScheduling {
+ 
+         Queue<Integer> queue = new LinkedList<>();
+         queue.add(0);
+-        int currentTime = 0; // keep track of the time
++        int currentTime = 0;
+         int completed = 0;
+         int[] mark = new int[processesNumber];
+         Arrays.fill(mark, 0);
+         mark[0] = 1;
+ 
+-        // a copy of burst time to store the remaining burst time
+         int[] remainingBurstTime = new int[processesNumber];
+         for (int i = 0; i < processesNumber; i++) {
+             remainingBurstTime[i] = processes.get(i).getBurstTime();
+@@ -60,13 +59,11 @@ public class RRScheduling {
+                 currentTime += quantumTime;
+             } else {
+                 currentTime += remainingBurstTime[index];
+-                processes.get(index).setTurnAroundTimeTime(currentTime - processes.get(index).getArrivalTime());
++                processes.get(index).setTurnAroundTime(currentTime - processes.get(index).getArrivalTime());
+                 completed++;
+                 remainingBurstTime[index] = 0;
+             }
+ 
+-            // If some process has arrived when this process was executing, insert them into the
+-            // queue.
+             for (int i = 1; i < processesNumber; i++) {
+                 if (remainingBurstTime[i] > 0 && processes.get(i).getArrivalTime() <= currentTime && mark[i] == 0) {
+                     mark[i] = 1;
+@@ -74,13 +71,10 @@ public class RRScheduling {
+                 }
+             }
+ 
+-            // If the current process has burst time remaining, push the process into the queue
+-            // again.
+             if (remainingBurstTime[index] > 0) {
+                 queue.add(index);
+             }
+ 
+-            // If the queue is empty, pick the first process from the list that is not completed.
+             if (queue.isEmpty()) {
+                 for (int i = 1; i < processesNumber; i++) {
+                     if (remainingBurstTime[i] > 0) {
+@@ -94,8 +88,8 @@ public class RRScheduling {
+     }
+ 
+     private void evaluateWaitingTime() {
+-        for (final var process : processes) {
+-            process.setWaitingTime(process.getTurnAroundTimeTime() - process.getBurstTime());
++        for (final ProcessDetails process : processes) {
++            process.setWaitingTime(process.getTurnAroundTime() - process.getBurstTime());
+         }
+     }
+ }
+diff --git a/src/test/java/com/thealgorithms/devutils/entities/ProcessDetailsTest.java b/src/test/java/com/thealgorithms/devutils/entities/ProcessDetailsTest.java
+index b5c96c60..f42052e9 100644
+--- a/src/test/java/com/thealgorithms/devutils/entities/ProcessDetailsTest.java
++++ b/src/test/java/com/thealgorithms/devutils/entities/ProcessDetailsTest.java
+@@ -19,35 +19,32 @@ class ProcessDetailsTest {
+ 
+     @BeforeEach
+     void setUp() {
+-        // Initialize test objects before each test
+         processWithPriority = new ProcessDetails("P1", 0, 10, 5);
+         processWithoutPriority = new ProcessDetails("P2", 2, 8);
+     }
+ 
+     @Test
+     void testConstructorWithPriority() {
+-        // Test constructor with priority parameter
+         ProcessDetails process = new ProcessDetails("P3", 1, 15, 3);
+ 
+         assertEquals("P3", process.getProcessId());
+         assertEquals(1, process.getArrivalTime());
+         assertEquals(15, process.getBurstTime());
+         assertEquals(3, process.getPriority());
+-        assertEquals(0, process.getWaitingTime()); // Default value
+-        assertEquals(0, process.getTurnAroundTimeTime()); // Default value
++        assertEquals(0, process.getWaitingTime());
++        assertEquals(0, process.getTurnAroundTime());
+     }
+ 
+     @Test
+     void testConstructorWithoutPriority() {
+-        // Test constructor without priority parameter
+         ProcessDetails process = new ProcessDetails("P4", 3, 12);
+ 
+         assertEquals("P4", process.getProcessId());
+         assertEquals(3, process.getArrivalTime());
+         assertEquals(12, process.getBurstTime());
+-        assertEquals(0, process.getPriority()); // Default value
+-        assertEquals(0, process.getWaitingTime()); // Default value
+-        assertEquals(0, process.getTurnAroundTimeTime()); // Default value
++        assertEquals(0, process.getPriority());
++        assertEquals(0, process.getWaitingTime());
++        assertEquals(0, process.getTurnAroundTime());
+     }
+ 
+     @Test
+@@ -70,22 +67,20 @@ class ProcessDetailsTest {
+ 
+     @Test
+     void testGetWaitingTime() {
+-        // Initial waiting time should be 0
+         assertEquals(0, processWithPriority.getWaitingTime());
+         assertEquals(0, processWithoutPriority.getWaitingTime());
+     }
+ 
+     @Test
+-    void testGetTurnAroundTimeTime() {
+-        // Initial turnaround time should be 0
+-        assertEquals(0, processWithPriority.getTurnAroundTimeTime());
+-        assertEquals(0, processWithoutPriority.getTurnAroundTimeTime());
++    void testGetTurnAroundTime() {
++        assertEquals(0, processWithPriority.getTurnAroundTime());
++        assertEquals(0, processWithoutPriority.getTurnAroundTime());
+     }
+ 
+     @Test
+     void testGetPriority() {
+         assertEquals(5, processWithPriority.getPriority());
+-        assertEquals(0, processWithoutPriority.getPriority()); // Default for constructor without priority
++        assertEquals(0, processWithoutPriority.getPriority());
+     }
+ 
+     @Test
+@@ -93,11 +88,9 @@ class ProcessDetailsTest {
+         processWithPriority.setProcessId("NewP1");
+         assertEquals("NewP1", processWithPriority.getProcessId());
+ 
+-        // Test setting null process ID
+         processWithPriority.setProcessId(null);
+         assertNull(processWithPriority.getProcessId());
+ 
+-        // Test setting empty process ID
+         processWithPriority.setProcessId("");
+         assertEquals("", processWithPriority.getProcessId());
+     }
+@@ -107,11 +100,9 @@ class ProcessDetailsTest {
+         processWithPriority.setArrivalTime(5);
+         assertEquals(5, processWithPriority.getArrivalTime());
+ 
+-        // Test setting negative arrival time
+         processWithPriority.setArrivalTime(-1);
+         assertEquals(-1, processWithPriority.getArrivalTime());
+ 
+-        // Test setting zero arrival time
+         processWithPriority.setArrivalTime(0);
+         assertEquals(0, processWithPriority.getArrivalTime());
+     }
+@@ -121,11 +112,9 @@ class ProcessDetailsTest {
+         processWithPriority.setBurstTime(20);
+         assertEquals(20, processWithPriority.getBurstTime());
+ 
+-        // Test setting zero burst time
+         processWithPriority.setBurstTime(0);
+         assertEquals(0, processWithPriority.getBurstTime());
+ 
+-        // Test setting very large burst time
+         processWithPriority.setBurstTime(Integer.MAX_VALUE);
+         assertEquals(Integer.MAX_VALUE, processWithPriority.getBurstTime());
+     }
+@@ -135,49 +124,42 @@ class ProcessDetailsTest {
+         processWithPriority.setWaitingTime(15);
+         assertEquals(15, processWithPriority.getWaitingTime());
+ 
+-        // Test setting negative waiting time
+         processWithPriority.setWaitingTime(-5);
+         assertEquals(-5, processWithPriority.getWaitingTime());
+ 
+-        // Test setting zero waiting time
+         processWithPriority.setWaitingTime(0);
+         assertEquals(0, processWithPriority.getWaitingTime());
+     }
+ 
+     @Test
+-    void testSetTurnAroundTimeTime() {
+-        processWithPriority.setTurnAroundTimeTime(25);
+-        assertEquals(25, processWithPriority.getTurnAroundTimeTime());
++    void testSetTurnAroundTime() {
++        processWithPriority.setTurnAroundTime(25);
++        assertEquals(25, processWithPriority.getTurnAroundTime());
+ 
+-        // Test setting negative turnaround time
+-        processWithPriority.setTurnAroundTimeTime(-10);
+-        assertEquals(-10, processWithPriority.getTurnAroundTimeTime());
++        processWithPriority.setTurnAroundTime(-10);
++        assertEquals(-10, processWithPriority.getTurnAroundTime());
+ 
+-        // Test setting zero turnaround time
+-        processWithPriority.setTurnAroundTimeTime(0);
+-        assertEquals(0, processWithPriority.getTurnAroundTimeTime());
++        processWithPriority.setTurnAroundTime(0);
++        assertEquals(0, processWithPriority.getTurnAroundTime());
+     }
+ 
+     @Test
+     void testCompleteProcessLifecycle() {
+-        // Test a complete process lifecycle with realistic scheduling values
+         ProcessDetails process = new ProcessDetails("P5", 0, 10, 2);
+ 
+-        // Simulate process execution
+-        process.setWaitingTime(5); // Process waited 5 time units
+-        process.setTurnAroundTimeTime(15); // Total time from arrival to completion
++        process.setWaitingTime(5);
++        process.setTurnAroundTime(15);
+ 
+         assertEquals("P5", process.getProcessId());
+         assertEquals(0, process.getArrivalTime());
+         assertEquals(10, process.getBurstTime());
+         assertEquals(5, process.getWaitingTime());
+-        assertEquals(15, process.getTurnAroundTimeTime());
++        assertEquals(15, process.getTurnAroundTime());
+         assertEquals(2, process.getPriority());
+     }
+ 
+     @Test
+     void testProcessWithMinimumValues() {
+-        // Test process with minimum possible values
+         ProcessDetails process = new ProcessDetails("", 0, 1, 0);
+ 
+         assertEquals("", process.getProcessId());
+@@ -188,7 +170,6 @@ class ProcessDetailsTest {
+ 
+     @Test
+     void testProcessWithMaximumValues() {
+-        // Test process with large values
+         ProcessDetails process = new ProcessDetails("LongProcessName", Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
+ 
+         assertEquals("LongProcessName", process.getProcessId());
+@@ -199,55 +180,47 @@ class ProcessDetailsTest {
+ 
+     @Test
+     void testProcessModificationAfterCreation() {
+-        // Test that all fields can be modified after object creation
+         ProcessDetails process = new ProcessDetails("Original", 1, 5, 3);
+ 
+-        // Modify all fields
+         process.setProcessId("Modified");
+         process.setArrivalTime(10);
+         process.setBurstTime(20);
+         process.setWaitingTime(8);
+-        process.setTurnAroundTimeTime(28);
++        process.setTurnAroundTime(28);
+ 
+-        // Verify all modifications
+         assertEquals("Modified", process.getProcessId());
+         assertEquals(10, process.getArrivalTime());
+         assertEquals(20, process.getBurstTime());
+         assertEquals(8, process.getWaitingTime());
+-        assertEquals(28, process.getTurnAroundTimeTime());
+-        assertEquals(3, process.getPriority()); // Priority has no setter, should remain unchanged
++        assertEquals(28, process.getTurnAroundTime());
++        assertEquals(3, process.getPriority());
+     }
+ 
+     @Test
+     void testMultipleProcessesIndependence() {
+-        // Test that multiple ProcessDetails objects are independent
+         ProcessDetails process1 = new ProcessDetails("P1", 0, 5, 1);
+         ProcessDetails process2 = new ProcessDetails("P2", 2, 8, 2);
+ 
+-        // Modify first process
+         process1.setWaitingTime(10);
+-        process1.setTurnAroundTimeTime(15);
++        process1.setTurnAroundTime(15);
+ 
+-        // Verify first process was modified correctly
+         assertEquals("P1", process1.getProcessId());
+         assertEquals(0, process1.getArrivalTime());
+         assertEquals(5, process1.getBurstTime());
+         assertEquals(1, process1.getPriority());
+         assertEquals(10, process1.getWaitingTime());
+-        assertEquals(15, process1.getTurnAroundTimeTime());
++        assertEquals(15, process1.getTurnAroundTime());
+ 
+-        // Verify second process is unchanged
+         assertEquals("P2", process2.getProcessId());
+         assertEquals(2, process2.getArrivalTime());
+         assertEquals(8, process2.getBurstTime());
+         assertEquals(2, process2.getPriority());
+         assertEquals(0, process2.getWaitingTime());
+-        assertEquals(0, process2.getTurnAroundTimeTime());
++        assertEquals(0, process2.getTurnAroundTime());
+     }
+ 
+     @Test
+     void testConstructorParameterOrder() {
+-        // Test that constructor parameters are assigned to correct fields
+         ProcessDetails process = new ProcessDetails("TestProcess", 123, 456, 789);
+ 
+         assertEquals("TestProcess", process.getProcessId());
+@@ -258,10 +231,8 @@ class ProcessDetailsTest {
+ 
+     @Test
+     void testTypicalSchedulingScenario() {
+-        // Test a typical scheduling scenario with multiple processes
+         ProcessDetails[] processes = {new ProcessDetails("P1", 0, 8, 3), new ProcessDetails("P2", 1, 4, 1), new ProcessDetails("P3", 2, 9, 4), new ProcessDetails("P4", 3, 5, 2)};
+ 
+-        // Simulate FCFS scheduling calculations
+         int currentTime = 0;
+         for (ProcessDetails process : processes) {
+             if (currentTime < process.getArrivalTime()) {
+@@ -269,20 +240,19 @@ class ProcessDetailsTest {
+             }
+             process.setWaitingTime(currentTime - process.getArrivalTime());
+             currentTime += process.getBurstTime();
+-            process.setTurnAroundTimeTime(process.getWaitingTime() + process.getBurstTime());
++            process.setTurnAroundTime(process.getWaitingTime() + process.getBurstTime());
+         }
+ 
+-        // Verify calculations
+-        assertEquals(0, processes[0].getWaitingTime()); // P1: arrives at 0, starts immediately
+-        assertEquals(8, processes[0].getTurnAroundTimeTime()); // P1: 0 + 8
++        assertEquals(0, processes[0].getWaitingTime());
++        assertEquals(8, processes[0].getTurnAroundTime());
+ 
+-        assertEquals(7, processes[1].getWaitingTime()); // P2: arrives at 1, starts at 8
+-        assertEquals(11, processes[1].getTurnAroundTimeTime()); // P2: 7 + 4
++        assertEquals(7, processes[1].getWaitingTime());
++        assertEquals(11, processes[1].getTurnAroundTime());
+ 
+-        assertEquals(10, processes[2].getWaitingTime()); // P3: arrives at 2, starts at 12
+-        assertEquals(19, processes[2].getTurnAroundTimeTime()); // P3: 10 + 9
++        assertEquals(10, processes[2].getWaitingTime());
++        assertEquals(19, processes[2].getTurnAroundTime());
+ 
+-        assertEquals(18, processes[3].getWaitingTime()); // P4: arrives at 3, starts at 21
+-        assertEquals(23, processes[3].getTurnAroundTimeTime()); // P4: 18 + 5
++        assertEquals(18, processes[3].getWaitingTime());
++        assertEquals(23, processes[3].getTurnAroundTime());
+     }
+ }
+diff --git a/src/test/java/com/thealgorithms/scheduling/FCFSSchedulingTest.java b/src/test/java/com/thealgorithms/scheduling/FCFSSchedulingTest.java
+index 87b3d12c..39835697 100644
+--- a/src/test/java/com/thealgorithms/scheduling/FCFSSchedulingTest.java
++++ b/src/test/java/com/thealgorithms/scheduling/FCFSSchedulingTest.java
+@@ -12,7 +12,7 @@ public class FCFSSchedulingTest {
+     @Test
+     public void testingProcesses() {
+         List<ProcessDetails> processes = addProcessesForFCFS();
+-        final FCFSScheduling fcfsScheduling = new FCFSScheduling(processes); // for sending to FCFS
++        final FCFSScheduling fcfsScheduling = new FCFSScheduling(processes);
+ 
+         fcfsScheduling.scheduleProcesses();
+ 
+@@ -20,15 +20,34 @@ public class FCFSSchedulingTest {
+ 
+         assertEquals("P1", processes.get(0).getProcessId());
+         assertEquals(0, processes.get(0).getWaitingTime());
+-        assertEquals(10, processes.get(0).getTurnAroundTimeTime());
++        assertEquals(10, processes.get(0).getTurnAroundTime());
+ 
+         assertEquals("P2", processes.get(1).getProcessId());
+-        assertEquals(10, processes.get(1).getWaitingTime());
+-        assertEquals(15, processes.get(1).getTurnAroundTimeTime());
++        assertEquals(9, processes.get(1).getWaitingTime());
++        assertEquals(14, processes.get(1).getTurnAroundTime());
+ 
+         assertEquals("P3", processes.get(2).getProcessId());
+-        assertEquals(15, processes.get(2).getWaitingTime());
+-        assertEquals(23, processes.get(2).getTurnAroundTimeTime());
++        assertEquals(13, processes.get(2).getWaitingTime());
++        assertEquals(21, processes.get(2).getTurnAroundTime());
++    }
++
++    @Test
++    public void testingProcessesWithDifferentArrivalTimes() {
++        List<ProcessDetails> processes = addProcessesOutOfArrivalOrderForFCFS();
++        final FCFSScheduling fcfsScheduling = new FCFSScheduling(processes);
++
++        fcfsScheduling.scheduleProcesses();
++
++        assertEquals(List.of("P1", "P3", "P2"), processes.stream().map(ProcessDetails::getProcessId).toList());
++
++        assertEquals(0, processes.get(0).getWaitingTime());
++        assertEquals(4, processes.get(0).getTurnAroundTime());
++
++        assertEquals(3, processes.get(1).getWaitingTime());
++        assertEquals(6, processes.get(1).getTurnAroundTime());
++
++        assertEquals(0, processes.get(2).getWaitingTime());
++        assertEquals(2, processes.get(2).getTurnAroundTime());
+     }
+ 
+     private List<ProcessDetails> addProcessesForFCFS() {
+@@ -43,4 +62,17 @@ public class FCFSSchedulingTest {
+ 
+         return processDetails;
+     }
++
++    private List<ProcessDetails> addProcessesOutOfArrivalOrderForFCFS() {
++        final ProcessDetails process1 = new ProcessDetails("P2", 10, 2);
++        final ProcessDetails process2 = new ProcessDetails("P3", 1, 3);
++        final ProcessDetails process3 = new ProcessDetails("P1", 0, 4);
++
++        final List<ProcessDetails> processDetails = new ArrayList<>();
++        processDetails.add(process1);
++        processDetails.add(process2);
++        processDetails.add(process3);
++
++        return processDetails;
++    }
+ }
+diff --git a/src/test/java/com/thealgorithms/scheduling/RRSchedulingTest.java b/src/test/java/com/thealgorithms/scheduling/RRSchedulingTest.java
+index 3da52660..e90e7c77 100644
+--- a/src/test/java/com/thealgorithms/scheduling/RRSchedulingTest.java
++++ b/src/test/java/com/thealgorithms/scheduling/RRSchedulingTest.java
+@@ -11,7 +11,7 @@ class RRSchedulingTest {
+     @Test
+     public void testingProcesses() {
+         List<ProcessDetails> processes = addProcessesForRR();
+-        final RRScheduling rrScheduling = new RRScheduling(processes, 4); // for sending to RR with quantum value 4
++        final RRScheduling rrScheduling = new RRScheduling(processes, 4);
+ 
+         rrScheduling.scheduleProcesses();
+ 
+@@ -19,27 +19,27 @@ class RRSchedulingTest {
+ 
+         assertEquals("P1", processes.get(0).getProcessId());
+         assertEquals(12, processes.get(0).getWaitingTime());
+-        assertEquals(17, processes.get(0).getTurnAroundTimeTime());
++        assertEquals(17, processes.get(0).getTurnAroundTime());
+ 
+         assertEquals("P2", processes.get(1).getProcessId());
+         assertEquals(16, processes.get(1).getWaitingTime());
+-        assertEquals(22, processes.get(1).getTurnAroundTimeTime());
++        assertEquals(22, processes.get(1).getTurnAroundTime());
+ 
+         assertEquals("P3", processes.get(2).getProcessId());
+         assertEquals(6, processes.get(2).getWaitingTime());
+-        assertEquals(9, processes.get(2).getTurnAroundTimeTime());
++        assertEquals(9, processes.get(2).getTurnAroundTime());
+ 
+         assertEquals("P4", processes.get(3).getProcessId());
+         assertEquals(8, processes.get(3).getWaitingTime());
+-        assertEquals(9, processes.get(3).getTurnAroundTimeTime());
++        assertEquals(9, processes.get(3).getTurnAroundTime());
+ 
+         assertEquals("P5", processes.get(4).getProcessId());
+         assertEquals(15, processes.get(4).getWaitingTime());
+-        assertEquals(20, processes.get(4).getTurnAroundTimeTime());
++        assertEquals(20, processes.get(4).getTurnAroundTime());
+ 
+         assertEquals("P6", processes.get(5).getProcessId());
+         assertEquals(11, processes.get(5).getWaitingTime());
+-        assertEquals(15, processes.get(5).getTurnAroundTimeTime());
++        assertEquals(15, processes.get(5).getTurnAroundTime());
+     }
+ 
+     private List<ProcessDetails> addProcessesForRR() {

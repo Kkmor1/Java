@@ -36,13 +36,12 @@ public class RRScheduling {
 
         Queue<Integer> queue = new LinkedList<>();
         queue.add(0);
-        int currentTime = 0; // keep track of the time
+        int currentTime = 0;
         int completed = 0;
         int[] mark = new int[processesNumber];
         Arrays.fill(mark, 0);
         mark[0] = 1;
 
-        // a copy of burst time to store the remaining burst time
         int[] remainingBurstTime = new int[processesNumber];
         for (int i = 0; i < processesNumber; i++) {
             remainingBurstTime[i] = processes.get(i).getBurstTime();
@@ -60,13 +59,11 @@ public class RRScheduling {
                 currentTime += quantumTime;
             } else {
                 currentTime += remainingBurstTime[index];
-                processes.get(index).setTurnAroundTimeTime(currentTime - processes.get(index).getArrivalTime());
+                processes.get(index).setTurnAroundTime(currentTime - processes.get(index).getArrivalTime());
                 completed++;
                 remainingBurstTime[index] = 0;
             }
 
-            // If some process has arrived when this process was executing, insert them into the
-            // queue.
             for (int i = 1; i < processesNumber; i++) {
                 if (remainingBurstTime[i] > 0 && processes.get(i).getArrivalTime() <= currentTime && mark[i] == 0) {
                     mark[i] = 1;
@@ -74,13 +71,10 @@ public class RRScheduling {
                 }
             }
 
-            // If the current process has burst time remaining, push the process into the queue
-            // again.
             if (remainingBurstTime[index] > 0) {
                 queue.add(index);
             }
 
-            // If the queue is empty, pick the first process from the list that is not completed.
             if (queue.isEmpty()) {
                 for (int i = 1; i < processesNumber; i++) {
                     if (remainingBurstTime[i] > 0) {
@@ -94,8 +88,8 @@ public class RRScheduling {
     }
 
     private void evaluateWaitingTime() {
-        for (final var process : processes) {
-            process.setWaitingTime(process.getTurnAroundTimeTime() - process.getBurstTime());
+        for (final ProcessDetails process : processes) {
+            process.setWaitingTime(process.getTurnAroundTime() - process.getBurstTime());
         }
     }
 }

@@ -11,7 +11,7 @@ class RRSchedulingTest {
     @Test
     public void testingProcesses() {
         List<ProcessDetails> processes = addProcessesForRR();
-        final RRScheduling rrScheduling = new RRScheduling(processes, 4); // for sending to RR with quantum value 4
+        final RRScheduling rrScheduling = new RRScheduling(processes, 4);
 
         rrScheduling.scheduleProcesses();
 
@@ -19,27 +19,27 @@ class RRSchedulingTest {
 
         assertEquals("P1", processes.get(0).getProcessId());
         assertEquals(12, processes.get(0).getWaitingTime());
-        assertEquals(17, processes.get(0).getTurnAroundTimeTime());
+        assertEquals(17, processes.get(0).getTurnAroundTime());
 
         assertEquals("P2", processes.get(1).getProcessId());
         assertEquals(16, processes.get(1).getWaitingTime());
-        assertEquals(22, processes.get(1).getTurnAroundTimeTime());
+        assertEquals(22, processes.get(1).getTurnAroundTime());
 
         assertEquals("P3", processes.get(2).getProcessId());
         assertEquals(6, processes.get(2).getWaitingTime());
-        assertEquals(9, processes.get(2).getTurnAroundTimeTime());
+        assertEquals(9, processes.get(2).getTurnAroundTime());
 
         assertEquals("P4", processes.get(3).getProcessId());
         assertEquals(8, processes.get(3).getWaitingTime());
-        assertEquals(9, processes.get(3).getTurnAroundTimeTime());
+        assertEquals(9, processes.get(3).getTurnAroundTime());
 
         assertEquals("P5", processes.get(4).getProcessId());
         assertEquals(15, processes.get(4).getWaitingTime());
-        assertEquals(20, processes.get(4).getTurnAroundTimeTime());
+        assertEquals(20, processes.get(4).getTurnAroundTime());
 
         assertEquals("P6", processes.get(5).getProcessId());
         assertEquals(11, processes.get(5).getWaitingTime());
-        assertEquals(15, processes.get(5).getTurnAroundTimeTime());
+        assertEquals(15, processes.get(5).getTurnAroundTime());
     }
 
     private List<ProcessDetails> addProcessesForRR() {
