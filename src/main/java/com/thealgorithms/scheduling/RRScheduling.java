@@ -60,7 +60,7 @@ public class RRScheduling {
                 currentTime += quantumTime;
             } else {
                 currentTime += remainingBurstTime[index];
-                processes.get(index).setTurnAroundTimeTime(currentTime - processes.get(index).getArrivalTime());
+                processes.get(index).setTurnAroundTime(currentTime - processes.get(index).getArrivalTime());
                 completed++;
                 remainingBurstTime[index] = 0;
             }
@@ -95,7 +95,7 @@ public class RRScheduling {
 
     private void evaluateWaitingTime() {
         for (final var process : processes) {
-            process.setWaitingTime(process.getTurnAroundTimeTime() - process.getBurstTime());
+            process.setWaitingTime(process.getTurnAroundTime() - process.getBurstTime());
         }
     }
 }

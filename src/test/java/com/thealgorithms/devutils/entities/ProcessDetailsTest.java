@@ -34,7 +34,7 @@ class ProcessDetailsTest {
         assertEquals(15, process.getBurstTime());
         assertEquals(3, process.getPriority());
         assertEquals(0, process.getWaitingTime()); // Default value
-        assertEquals(0, process.getTurnAroundTimeTime()); // Default value
+        assertEquals(0, process.getTurnAroundTime()); // Default value
     }
 
     @Test
@@ -47,7 +47,7 @@ class ProcessDetailsTest {
         assertEquals(12, process.getBurstTime());
         assertEquals(0, process.getPriority()); // Default value
         assertEquals(0, process.getWaitingTime()); // Default value
-        assertEquals(0, process.getTurnAroundTimeTime()); // Default value
+        assertEquals(0, process.getTurnAroundTime()); // Default value
     }
 
     @Test
@@ -76,10 +76,10 @@ class ProcessDetailsTest {
     }
 
     @Test
-    void testGetTurnAroundTimeTime() {
+    void testGetTurnAroundTime() {
         // Initial turnaround time should be 0
-        assertEquals(0, processWithPriority.getTurnAroundTimeTime());
-        assertEquals(0, processWithoutPriority.getTurnAroundTimeTime());
+        assertEquals(0, processWithPriority.getTurnAroundTime());
+        assertEquals(0, processWithoutPriority.getTurnAroundTime());
     }
 
     @Test
@@ -145,17 +145,17 @@ class ProcessDetailsTest {
     }
 
     @Test
-    void testSetTurnAroundTimeTime() {
-        processWithPriority.setTurnAroundTimeTime(25);
-        assertEquals(25, processWithPriority.getTurnAroundTimeTime());
+    void testSetTurnAroundTime() {
+        processWithPriority.setTurnAroundTime(25);
+        assertEquals(25, processWithPriority.getTurnAroundTime());
 
         // Test setting negative turnaround time
-        processWithPriority.setTurnAroundTimeTime(-10);
-        assertEquals(-10, processWithPriority.getTurnAroundTimeTime());
+        processWithPriority.setTurnAroundTime(-10);
+        assertEquals(-10, processWithPriority.getTurnAroundTime());
 
         // Test setting zero turnaround time
-        processWithPriority.setTurnAroundTimeTime(0);
-        assertEquals(0, processWithPriority.getTurnAroundTimeTime());
+        processWithPriority.setTurnAroundTime(0);
+        assertEquals(0, processWithPriority.getTurnAroundTime());
     }
 
     @Test
@@ -165,13 +165,13 @@ class ProcessDetailsTest {
 
         // Simulate process execution
         process.setWaitingTime(5); // Process waited 5 time units
-        process.setTurnAroundTimeTime(15); // Total time from arrival to completion
+        process.setTurnAroundTime(15); // Total time from arrival to completion
 
         assertEquals("P5", process.getProcessId());
         assertEquals(0, process.getArrivalTime());
         assertEquals(10, process.getBurstTime());
         assertEquals(5, process.getWaitingTime());
-        assertEquals(15, process.getTurnAroundTimeTime());
+        assertEquals(15, process.getTurnAroundTime());
         assertEquals(2, process.getPriority());
     }
 
@@ -207,14 +207,14 @@ class ProcessDetailsTest {
         process.setArrivalTime(10);
         process.setBurstTime(20);
         process.setWaitingTime(8);
-        process.setTurnAroundTimeTime(28);
+        process.setTurnAroundTime(28);
 
         // Verify all modifications
         assertEquals("Modified", process.getProcessId());
         assertEquals(10, process.getArrivalTime());
         assertEquals(20, process.getBurstTime());
         assertEquals(8, process.getWaitingTime());
-        assertEquals(28, process.getTurnAroundTimeTime());
+        assertEquals(28, process.getTurnAroundTime());
         assertEquals(3, process.getPriority()); // Priority has no setter, should remain unchanged
     }
 
@@ -226,7 +226,7 @@ class ProcessDetailsTest {
 
         // Modify first process
         process1.setWaitingTime(10);
-        process1.setTurnAroundTimeTime(15);
+        process1.setTurnAroundTime(15);
 
         // Verify first process was modified correctly
         assertEquals("P1", process1.getProcessId());
@@ -234,7 +234,7 @@ class ProcessDetailsTest {
         assertEquals(5, process1.getBurstTime());
         assertEquals(1, process1.getPriority());
         assertEquals(10, process1.getWaitingTime());
-        assertEquals(15, process1.getTurnAroundTimeTime());
+        assertEquals(15, process1.getTurnAroundTime());
 
         // Verify second process is unchanged
         assertEquals("P2", process2.getProcessId());
@@ -242,7 +242,7 @@ class ProcessDetailsTest {
         assertEquals(8, process2.getBurstTime());
         assertEquals(2, process2.getPriority());
         assertEquals(0, process2.getWaitingTime());
-        assertEquals(0, process2.getTurnAroundTimeTime());
+        assertEquals(0, process2.getTurnAroundTime());
     }
 
     @Test
@@ -269,20 +269,20 @@ class ProcessDetailsTest {
             }
             process.setWaitingTime(currentTime - process.getArrivalTime());
             currentTime += process.getBurstTime();
-            process.setTurnAroundTimeTime(process.getWaitingTime() + process.getBurstTime());
+            process.setTurnAroundTime(process.getWaitingTime() + process.getBurstTime());
         }
 
         // Verify calculations
         assertEquals(0, processes[0].getWaitingTime()); // P1: arrives at 0, starts immediately
-        assertEquals(8, processes[0].getTurnAroundTimeTime()); // P1: 0 + 8
+        assertEquals(8, processes[0].getTurnAroundTime()); // P1: 0 + 8
 
         assertEquals(7, processes[1].getWaitingTime()); // P2: arrives at 1, starts at 8
-        assertEquals(11, processes[1].getTurnAroundTimeTime()); // P2: 7 + 4
+        assertEquals(11, processes[1].getTurnAroundTime()); // P2: 7 + 4
 
         assertEquals(10, processes[2].getWaitingTime()); // P3: arrives at 2, starts at 12
-        assertEquals(19, processes[2].getTurnAroundTimeTime()); // P3: 10 + 9
+        assertEquals(19, processes[2].getTurnAroundTime()); // P3: 10 + 9
 
         assertEquals(18, processes[3].getWaitingTime()); // P4: arrives at 3, starts at 21
-        assertEquals(23, processes[3].getTurnAroundTimeTime()); // P4: 18 + 5
+        assertEquals(23, processes[3].getTurnAroundTime()); // P4: 18 + 5
     }
 }
