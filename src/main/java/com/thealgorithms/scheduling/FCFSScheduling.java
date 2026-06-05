@@ -1,6 +1,7 @@
 package com.thealgorithms.scheduling;
 
 import com.thealgorithms.devutils.entities.ProcessDetails;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -16,6 +17,7 @@ public class FCFSScheduling {
     }
 
     public void scheduleProcesses() {
+        processes.sort(Comparator.comparingInt(ProcessDetails::getArrivalTime));
         evaluateWaitingTime();
         evaluateTurnAroundTime();
     }
@@ -27,21 +29,25 @@ public class FCFSScheduling {
             return;
         }
 
-        int waitingTime = 0;
+        int currentTime = processes.get(0).getArrivalTime();
         int burstTime = processes.get(0).getBurstTime();
 
-        processes.get(0).setWaitingTime(waitingTime); // for the first process, waiting time will be 0.
+        processes.get(0).setWaitingTime(0);
+        currentTime += burstTime;
 
         for (int i = 1; i < processesNumber; i++) {
-            processes.get(i).setWaitingTime(waitingTime + burstTime);
-            waitingTime = processes.get(i).getWaitingTime();
-            burstTime = processes.get(i).getBurstTime();
+            ProcessDetails currentProcess = processes.get(i);
+            if (currentTime < currentProcess.getArrivalTime()) {
+                currentTime = currentProcess.getArrivalTime();
+            }
+            currentProcess.setWaitingTime(currentTime - currentProcess.getArrivalTime());
+            currentTime += currentProcess.getBurstTime();
         }
     }
 
     private void evaluateTurnAroundTime() {
         for (final var process : processes) {
-            process.setTurnAroundTimeTime(process.getBurstTime() + process.getWaitingTime());
+            process.setTurnAroundTime(process.getBurstTime() + process.getWaitingTime());
         }
     }
 }
