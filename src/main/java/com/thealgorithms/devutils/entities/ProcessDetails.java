@@ -37,7 +37,7 @@ public class ProcessDetails {
         return waitingTime;
     }
 
-    public int getTurnAroundTimeTime() {
+    public int getTurnAroundTime() {
         return turnAroundTime;
     }
 
@@ -61,7 +61,7 @@ public class ProcessDetails {
         this.waitingTime = waitingTime;
     }
 
-    public void setTurnAroundTimeTime(final int turnAroundTime) {
+    public void setTurnAroundTime(final int turnAroundTime) {
         this.turnAroundTime = turnAroundTime;
     }
 }

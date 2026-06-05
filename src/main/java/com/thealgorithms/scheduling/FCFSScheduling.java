@@ -16,6 +16,7 @@ public class FCFSScheduling {
     }
 
     public void scheduleProcesses() {
+        processes.sort((p1, p2) -> Integer.compare(p1.getArrivalTime(), p2.getArrivalTime()));
         evaluateWaitingTime();
         evaluateTurnAroundTime();
     }
@@ -27,21 +28,19 @@ public class FCFSScheduling {
             return;
         }
 
-        int waitingTime = 0;
-        int burstTime = processes.get(0).getBurstTime();
-
-        processes.get(0).setWaitingTime(waitingTime); // for the first process, waiting time will be 0.
-
-        for (int i = 1; i < processesNumber; i++) {
-            processes.get(i).setWaitingTime(waitingTime + burstTime);
-            waitingTime = processes.get(i).getWaitingTime();
-            burstTime = processes.get(i).getBurstTime();
+        int currentTime = 0;
+        for (ProcessDetails process : processes) {
+            if (currentTime < process.getArrivalTime()) {
+                currentTime = process.getArrivalTime();
+            }
+            process.setWaitingTime(currentTime - process.getArrivalTime());
+            currentTime += process.getBurstTime();
         }
     }
 
     private void evaluateTurnAroundTime() {
         for (final var process : processes) {
-            process.setTurnAroundTimeTime(process.getBurstTime() + process.getWaitingTime());
+            process.setTurnAroundTime(process.getBurstTime() + process.getWaitingTime());
         }
     }
 }
