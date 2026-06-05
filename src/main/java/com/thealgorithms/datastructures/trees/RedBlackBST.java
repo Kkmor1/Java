@@ -1,5 +1,7 @@
 package com.thealgorithms.datastructures.trees;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -25,6 +27,188 @@ public class RedBlackBST {
 
     private final Node nil = new Node(-1);
     private Node root = nil;
+
+    /**
+     * Inserts a key into the red-black tree.
+     *
+     * @param key the key to insert
+     */
+    public void insert(int key) {
+        Node node = new Node(key);
+        insert(node);
+    }
+
+    /**
+     * Deletes a key from the red-black tree.
+     *
+     * @param key the key to delete
+     * @return true if the key was found and deleted, false otherwise
+     */
+    public boolean delete(int key) {
+        Node node = new Node(key);
+        return delete(node);
+    }
+
+    /**
+     * Searches for a key in the red-black tree.
+     *
+     * @param key the key to search for
+     * @return true if the key is found, false otherwise
+     */
+    public boolean search(int key) {
+        Node node = new Node(key);
+        return findNode(node, root) != null;
+    }
+
+    /**
+     * Returns the minimum key in the tree.
+     *
+     * @return the minimum key, or null if the tree is empty
+     */
+    public Integer treeMinimum() {
+        if (root == nil) {
+            return null;
+        }
+        return treeMinimum(root).key;
+    }
+
+    /**
+     * Returns the maximum key in the tree.
+     *
+     * @return the maximum key, or null if the tree is empty
+     */
+    public Integer treeMaximum() {
+        if (root == nil) {
+            return null;
+        }
+        Node node = root;
+        while (node.right != nil) {
+            node = node.right;
+        }
+        return node.key;
+    }
+
+    /**
+     * Finds the successor of a given key.
+     *
+     * @param key the key whose successor to find
+     * @return the successor key, or null if no successor exists
+     */
+    public Integer findSuccessor(int key) {
+        Node node = new Node(key);
+        Node foundNode = findNode(node, root);
+        if (foundNode == null) {
+            return null;
+        }
+        if (foundNode.right != nil) {
+            return treeMinimum(foundNode.right).key;
+        }
+        Node p = foundNode.p;
+        while (p != nil && foundNode == p.right) {
+            foundNode = p;
+            p = p.p;
+        }
+        return p == nil ? null : p.key;
+    }
+
+    /**
+     * Finds the predecessor of a given key.
+     *
+     * @param key the key whose predecessor to find
+     * @return the predecessor key, or null if no predecessor exists
+     */
+    public Integer findPredecessor(int key) {
+        Node node = new Node(key);
+        Node foundNode = findNode(node, root);
+        if (foundNode == null) {
+            return null;
+        }
+        if (foundNode.left != nil) {
+            Node temp = foundNode.left;
+            while (temp.right != nil) {
+                temp = temp.right;
+            }
+            return temp.key;
+        }
+        Node p = foundNode.p;
+        while (p != nil && foundNode == p.left) {
+            foundNode = p;
+            p = p.p;
+        }
+        return p == nil ? null : p.key;
+    }
+
+    /**
+     * Checks if the red-black tree is empty.
+     *
+     * @return true if the tree is empty, false otherwise
+     */
+    public boolean isEmpty() {
+        return root == nil;
+    }
+
+    /**
+     * Validates all red-black tree invariants.
+     *
+     * @return true if all invariants hold, false otherwise
+     */
+    public boolean validateRedBlackInvariants() {
+        if (root == nil) {
+            return true;
+        }
+        
+        if (root.color != BLACK) {
+            return false;
+        }
+
+        return validateRedNodeChildren(root) && validateBlackHeight(root) != -1;
+    }
+
+    private boolean validateRedNodeChildren(Node node) {
+        if (node == nil) {
+            return true;
+        }
+        if (node.color == RED) {
+            if (node.left.color != BLACK || node.right.color != BLACK) {
+                return false;
+            }
+        }
+        return validateRedNodeChildren(node.left) && validateRedNodeChildren(node.right);
+    }
+
+    private int validateBlackHeight(Node node) {
+        if (node == nil) {
+            return 1;
+        }
+        int leftBlackHeight = validateBlackHeight(node.left);
+        int rightBlackHeight = validateBlackHeight(node.right);
+        
+        if (leftBlackHeight == -1 || rightBlackHeight == -1 || leftBlackHeight != rightBlackHeight) {
+            return -1;
+        }
+        
+        return leftBlackHeight + (node.color == BLACK ? 1 : 0);
+    }
+
+    /**
+     * Returns an in-order traversal of the tree keys.
+     *
+     * @return a list of keys in in-order traversal
+     */
+    public List<Integer> inOrderTraversal() {
+        List<Integer> result = new ArrayList<>();
+        inOrderTraversal(root, result);
+        return result;
+    }
+
+    private void inOrderTraversal(Node node, List<Integer> result) {
+        if (node == nil) {
+            return;
+        }
+        inOrderTraversal(node.left, result);
+        result.add(node.key);
+        inOrderTraversal(node.right, result);
+    }
 
     public void printTree(Node node) {
         if (node == nil) {
