@@ -7,10 +7,10 @@ import java.util.Scanner;
  */
 public class RedBlackBST {
 
-    private static final int RED = 0;
-    private static final int BLACK = 1;
+    static final int RED = 0;
+    static final int BLACK = 1;
 
-    private class Node {
+    class Node {
 
         int key = -1;
         int color = BLACK;
@@ -23,8 +23,8 @@ public class RedBlackBST {
         }
     }
 
-    private final Node nil = new Node(-1);
-    private Node root = nil;
+    final Node nil = new Node(-1);
+    Node root = nil;
 
     public void printTree(Node node) {
         if (node == nil) {
@@ -60,6 +60,11 @@ public class RedBlackBST {
             return node;
         }
         return null;
+    }
+
+    public void insert(int key) {
+        Node node = new Node(key);
+        insert(node);
     }
 
     private void insert(Node node) {
@@ -196,6 +201,79 @@ public class RedBlackBST {
         with.p = target.p;
     }
 
+    public boolean search(int key) {
+        Node n = new Node(key);
+        return findNode(n, root) != null;
+    }
+
+    public boolean delete(int key) {
+        Node n = new Node(key);
+        return delete(n);
+    }
+
+    public Integer getMinimum() {
+        if (root == nil) {
+            return null;
+        }
+        return treeMinimum(root).key;
+    }
+
+    public Integer getMaximum() {
+        if (root == nil) {
+            return null;
+        }
+        return treeMaximum(root).key;
+    }
+
+    public Integer getSuccessor(int key) {
+        Node n = findNode(new Node(key), root);
+        if (n == null) {
+            return null;
+        }
+        Node succ = treeSuccessor(n);
+        return succ != nil ? succ.key : null;
+    }
+
+    public Integer getPredecessor(int key) {
+        Node n = findNode(new Node(key), root);
+        if (n == null) {
+            return null;
+        }
+        Node pred = treePredecessor(n);
+        return pred != nil ? pred.key : null;
+    }
+
+    Node treeMaximum(Node subTreeRoot) {
+        while (subTreeRoot.right != nil) {
+            subTreeRoot = subTreeRoot.right;
+        }
+        return subTreeRoot;
+    }
+
+    Node treeSuccessor(Node x) {
+        if (x.right != nil) {
+            return treeMinimum(x.right);
+        }
+        Node y = x.p;
+        while (y != nil && x == y.right) {
+            x = y;
+            y = y.p;
+        }
+        return y;
+    }
+
+    Node treePredecessor(Node x) {
+        if (x.left != nil) {
+            return treeMaximum(x.left);
+        }
+        Node y = x.p;
+        while (y != nil && x == y.left) {
+            x = y;
+            y = y.p;
+        }
+        return y;
+    }
+
     Node treeMinimum(Node subTreeRoot) {
         while (subTreeRoot.left != nil) {
             subTreeRoot = subTreeRoot.left;
@@ -208,6 +286,7 @@ public class RedBlackBST {
         if (result == null) {
             return false;
         }
+        z = result; // USE THE FOUND NODE
         Node x;
         Node y = z;
         int yorigcolor = y.color;
