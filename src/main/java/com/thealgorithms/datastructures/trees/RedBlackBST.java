@@ -209,30 +209,30 @@ public class RedBlackBST {
             return false;
         }
         Node x;
-        Node y = z;
+        Node y = result;
         int yorigcolor = y.color;
 
-        if (z.left == nil) {
-            x = z.right;
-            transplant(z, z.right);
-        } else if (z.right == nil) {
-            x = z.left;
-            transplant(z, z.left);
+        if (result.left == nil) {
+            x = result.right;
+            transplant(result, result.right);
+        } else if (result.right == nil) {
+            x = result.left;
+            transplant(result, result.left);
         } else {
-            y = treeMinimum(z.right);
+            y = treeMinimum(result.right);
             yorigcolor = y.color;
             x = y.right;
-            if (y.p == z) {
+            if (y.p == result) {
                 x.p = y;
             } else {
                 transplant(y, y.right);
-                y.right = z.right;
+                y.right = result.right;
                 y.right.p = y;
             }
-            transplant(z, y);
-            y.left = z.left;
+            transplant(result, y);
+            y.left = result.left;
             y.left.p = y;
-            y.color = z.color;
+            y.color = result.color;
         }
         if (yorigcolor == BLACK) {
             deleteFixup(x);
